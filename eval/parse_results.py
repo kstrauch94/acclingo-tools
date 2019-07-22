@@ -305,6 +305,15 @@ def write_param_files(param_file, configs, output_name):
                 if any(config in line for config in configs):
                     out.write(line)
 
+
+def do_virtual_best(data, config_names, best_n, data_optimal, VB_name, folder_name):
+    create_folder(folder_name)
+
+    t = time.time()
+    print("calculating virtual best based on {}".format(VB_name))
+    virtual_to_csv(data, config_names, os.path.join(folder_name,"{}-top{}.csv".format(VB_name, best_n)), data_optimal)
+    print("time taken: {}".format(time.time() - t))
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -366,44 +375,15 @@ if __name__ == "__main__":
     best_n_optimal_count = optimal_count(data_optimal).sort_values(ascending=False).index[:best_n]
 
 
-    optval_folder = "uniques-VB"
-    new_folder = os.path.join(folder, optval_folder)
-    create_folder(new_folder)
+    do_virtual_best(data_optval, best_n_unique, best_n, data_optimal,"by-unique", os.path.join(folder, "VB-uniques"))
+
+    do_virtual_best(data_optval, best_n_all, best_n, data_optimal,"by-score", os.path.join(folder, "VB-best-by-scrore"))
 
 
-    t = time.time()
-    print("calculating virtual best based on top unique configs")
-    virtual_to_csv(data_optval, best_n_unique, os.path.join(new_folder,"VB_byscore_unique-top{}.csv".format(best_n)), data_optimal)
-    print("time taken: {}".format(time.time() - t))
+    do_virtual_best(data_optval, best_n_mean_rank, best_n, data_optimal,"by-mean-rank", os.path.join(folder, "VB-mean_rank"))
 
 
-    overallbest_folder = "best-by-scrore-VB"
-    new_folder = os.path.join(folder, overallbest_folder)
-    create_folder(new_folder)
-
-    t = time.time()
-    print("calculating virtual best based on top overall configs")
-    virtual_to_csv(data_optval, best_n_all, os.path.join(new_folder,"VB_byscore_all-top{}.csv".format(best_n)), data_optimal)
-    print("time taken: {}".format(time.time() - t))
-
-
-    mean_rank_folder = "mean_rank-VB"
-    new_folder = os.path.join(folder, mean_rank_folder)
-    create_folder(new_folder)
-
-    t = time.time()
-    print("calculating virtual best based on top mean rank configs")
-    virtual_to_csv(data_optval, best_n_mean_rank, os.path.join(new_folder,"VB_by-mean-rank-top{}.csv".format(best_n)), data_optimal)
-    print("time taken: {}".format(time.time() - t))
-
-    optimal_count_folder = "optimal-count-VB"
-    new_folder = os.path.join(folder, optimal_count_folder)
-    create_folder(new_folder)
-
-    t = time.time()
-    print("calculating virtual best based on optimal count")
-    virtual_to_csv(data_optval, best_n_optimal_count, os.path.join(new_folder,"VB_by-optimal-count-top{}.csv".format(best_n)), data_optimal)
-    print("time taken: {}".format(time.time() - t))
+    do_virtual_best(data_optval, best_n_optimal_count, best_n, data_optimal,"by-optimal-count", os.path.join(folder, "VB-optimal-count"))
 
     parameter_folder = "parameter-files"
     new_folder = os.path.join(folder, parameter_folder)
