@@ -53,8 +53,8 @@ def compare_configs(base_config, other_config, params=None):
 
     if params is None:
         params = set()
-        params.update(base_config[-1].param_names)
-        params.update(other_config[-1].param_names)
+        params.update(base_config.param_names)
+        params.update(other_config.param_names)
         params = sorted(list(params))
 
     line_base = [base_config.name]
@@ -65,10 +65,16 @@ def compare_configs(base_config, other_config, params=None):
 
         line_base.append(val_base)
 
-        overwrite = base_config.compare_param(param, val)
+        overwrite = base_config.compare_param(param, val_other)
         line_other.append(val_other+"|"+overwrite)
 
-    return line_base, line_other, params
+
+    return compared_list_to_str(base_config.name, line_base), \
+            compared_list_to_str(other_config.name, line_other), \
+            compared_list_to_str("", params)
+
+def compared_list_to_str(name, comp_list):
+    return "{};".format(name) + ";".join(comp_list) + "\n"
 
 def compare_configs_strings(base_config_str, other_config_str, params=None):
 
@@ -109,11 +115,11 @@ if __name__ == "__main__":
     all_params = sorted(list(all_params))
 
     with open(args.out, "w") as f:
-        f.write("name;" + ";".join(all_params) + "\n")
+        f.write(compared_list_to_str("name", all_params))
 
         for c in configs:
-            line, _ = compare_configs(default_configs[c.config_param], c)
-            f.write("{};".format(c.name) + ";".join(line) + "\n")
+            line_base, line_other, params = compare_configs(default_configs[c.config_param], c)
+            f.write(line_other)
 
 
 
