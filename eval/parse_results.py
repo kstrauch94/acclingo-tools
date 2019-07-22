@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import json
 import time
+import comparing_tool
 
 
 
@@ -17,7 +18,7 @@ OPTIMAL_PATH = "/home/klaus/Desktop/Work/TT-opt/results-TT/TT-test-optimal/TT-te
 
 bestbound_path = "/home/klaus/Desktop/Work/TT-opt/bestboundtest.csv"
 
-NAME_PREFIX = "clingo-1/opt-tae-3sets-9samples-a-i-45instances-45min-115runs---"
+NAME_PREFIX = "clingo-1/oppt-tae-3sets-10-samples-i-45instances-45min-115runs---"
 
 NAME_SPLIT = "-||-"
 
@@ -296,7 +297,6 @@ def write_param_files(param_file, configs, output_name):
     # read the file with the config names and its parameters and
     # extract only the configs we want
     # then write to a separate file
-
     with open(param_file, "r") as f:
         lines = f.readlines()
 
@@ -313,6 +313,26 @@ def do_virtual_best(data, config_names, best_n, data_optimal, VB_name, folder_na
     print("calculating virtual best based on {}".format(VB_name))
     virtual_to_csv(data, config_names, os.path.join(folder_name,"{}-top{}.csv".format(VB_name, best_n)), data_optimal)
     print("time taken: {}".format(time.time() - t))
+
+def compare_configs(parameter_file, to_compare, out_file):
+
+    print("COMPARING")
+    print(parameter_file)
+    print("###")
+    with open(parameter_file, "r") as f:
+        configs = f.readlines()
+
+    with open(out_file, "w") as f:
+
+        for base, other in to_compare:
+            line_base, line_other, params = comparing_tool.compare_configs_strings(configs[base], configs[other])
+
+            f.write("Comparing configs {} and {}".format(base, other))
+            f.write(params)
+            f.write(line_base)
+            f.write(line_other)
+            f.write("\n\n")
+
 
 if __name__ == "__main__":
 
@@ -379,9 +399,7 @@ if __name__ == "__main__":
 
     do_virtual_best(data_optval, best_n_all, best_n, data_optimal,"by-score", os.path.join(folder, "VB-best-by-scrore"))
 
-
     do_virtual_best(data_optval, best_n_mean_rank, best_n, data_optimal,"by-mean-rank", os.path.join(folder, "VB-mean_rank"))
-
 
     do_virtual_best(data_optval, best_n_optimal_count, best_n, data_optimal,"by-optimal-count", os.path.join(folder, "VB-optimal-count"))
 
@@ -394,3 +412,10 @@ if __name__ == "__main__":
     write_param_files(args.options_file, best_n_all, os.path.join(new_folder,"bestall-options.txt"))
     write_param_files(args.options_file, best_n_mean_rank, os.path.join(new_folder,"mean_rank-options.txt"))
     write_param_files(args.options_file, best_n_optimal_count, os.path.join(new_folder,"optimal_count-options.txt"))
+
+
+    to_compare = list(zip(range(best_n - 1), range(1, best_n)))
+    compare_configs(os.path.join(new_folder,"unique-options.txt"), to_compare, os.path.join(folder, "VB-uniques") + os.sep + "compared_options.csv")
+    compare_configs(os.path.join(new_folder,"bestall-options.txt"), to_compare, os.path.join(folder, "VB-best-by-scrore") + os.sep + "compared_options.csv")
+    compare_configs(os.path.join(new_folder,"mean_rank-options.txt"), to_compare, os.path.join(folder, "VB-mean_rank") + os.sep + "compared_options.csv")
+    compare_configs(os.path.join(new_folder,"optimal_count-options.txt"), to_compare, os.path.join(folder, "VB-optimal-count") + os.sep + "compared_options.csv")
