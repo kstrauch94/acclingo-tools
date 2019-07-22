@@ -6,13 +6,13 @@ import argparse
 
 FIND = ["find", "folder_placeholder", "-name", "traj_aclib2.json"]
 
-HEADER = """<runscript output="asprin-opt">
+HEADER = """<runscript output="output-folder">
 
 	<machine name="zuse" cpu="24x8xE5520@2.27GHz" memory="24GB"/>
 	
-	<config name="pbs-generic" template="templates/seq-generic2.sh"/>
+	<config name="pbs-generic" template="templates/seq-generic.sh"/>
   
-	<system name="asprin" version="1" measures="clingo" config="pbs-generic">
+	<system name="clingo" version="1" measures="clingo" config="pbs-generic">
 """
 
 SYSTEM_END = "</system>"
