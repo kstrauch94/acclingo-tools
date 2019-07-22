@@ -1,7 +1,7 @@
 # acclingo-tools
 Tools that simplify the use of Acclingo.
 
-#Requirements
+# Requirements
 This tool requires acclingo and python 3.
 To see how to install acclingo go to: 
 https://github.com/potassco/acclingo
