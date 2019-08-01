@@ -57,8 +57,8 @@ def compare_configs(base_config, other_config, params=None):
         params.update(other_config.param_names)
         params = sorted(list(params))
 
-    line_base = [base_config.name]
-    line_other = [other_config.name]
+    line_base = []
+    line_other = []
     for param in params:
         val_base = base_config.get_val(param)
         val_other = other_config.get_val(param)
@@ -82,12 +82,55 @@ def compare_configs_strings(base_config_str, other_config_str, params=None):
                             Configuration(other_config_str), 
                             params)
 
+def compare_configs_by_number(parameter_file, to_compare, out_file):
+
+
+    with open(parameter_file, "r") as f:
+        configs = f.readlines()
+
+    with open(out_file, "w") as f:
+
+        for base, other in to_compare:
+            line_base, line_other, params = compare_configs_strings(configs[base], configs[other])
+
+            f.write("Comparing configs {} and {}".format(base, other))
+            f.write(params)
+            f.write(line_base)
+            f.write(line_other)
+            f.write("\n\n")
+
+def compare_to_default_config(parameter_file, out_file):
+
+    # make it a set to have unique values
+    all_params = set()
+
+    with open(parameter_file, "r") as f:
+        configs = []
+        for c in f.readlines():
+            configs.append(Configuration(c))
+
+            all_params.update(configs[-1].param_names)
+
+    #convert to list so it is ordered
+    all_params = sorted(list(all_params))
+
+    with open(out_file, "w") as f:
+        f.write(compared_list_to_str("name", all_params))
+
+        for c in configs:
+            line_base, line_other, params = compare_configs(default_configs[c.config_param], c)
+            f.write(line_other)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-f", "--file", help="File with configurations to compare")
     parser.add_argument("-o", "--out", help="Output file name")
+
+    parser.add_argument("--self", action="store_true", help="Compare the configuration's options to the default options given by the config in '--configuration'")
+
+    parser.add_argument("--by-number", default=None, help="Compare the configurations in the lines given. Input is a tuple separate by a ,. Each tuple is separated by a ; Input format example: 1,2;4,9;1,6")
 
     args = parser.parse_args()
 
@@ -101,25 +144,12 @@ if __name__ == "__main__":
     default_configs["handy"]  = Configuration("handy;--sat-prepro=2,10,25,240 --trans-ext=dynamic --backprop --heuristic=Vsids --restarts=D,100,0.7 --deletion=sort,50,mixed --del-max=200000 --del-init=20.0,1000,14000 --del-cfl=+,4000,600 --del-glue=2 --update-lbd=less --strengthen=recursive --otfs=2 --save-progress=20 --contraction=600 --loops=distinct --counter-restarts=7,1023 --reverse-arcs=2")
     default_configs["auto"]  = Configuration("auto; ")
 
-    # make it a set to have unique values
-    all_params = set()
 
-    with open(args.file, "r") as f:
-        configs = []
-        for c in f.readlines():
-            configs.append(Configuration(c))
+    if args.self:
+        compare_to_default_config(args.file, args.out)
 
-            all_params.update(configs[-1].param_names)
-
-    #conver to list so it is ordered
-    all_params = sorted(list(all_params))
-
-    with open(args.out, "w") as f:
-        f.write(compared_list_to_str("name", all_params))
-
-        for c in configs:
-            line_base, line_other, params = compare_configs(default_configs[c.config_param], c)
-            f.write(line_other)
-
-
+    if args.by_number is not None:
+        pairs = [t.split(",") for t in args.by_number.split(";")]
+        pairs = [(int(v),int(m)) for v,m in pairs]
+        compare_configs_by_number(args.file, pairs, args.out)
 
