@@ -19,6 +19,7 @@ OPTIMAL_PATH = "/home/klaus/Desktop/Work/TT-opt/results-TT/TT-test-optimal/TT-te
 bestbound_path = "/home/klaus/Desktop/Work/TT-opt/bestboundtest.csv"
 
 NAME_PREFIX = "clingo-1/oppt-tae-3sets-10-samples-i-45instances-45min-115runs---"
+NAME_PREFIX_2 = "clingo-1/"
 
 NAME_SPLIT = "-||-"
 
@@ -256,21 +257,24 @@ def unique_vals_in_cols(data):
     # eq(0) makes sure that the row has a 0
     # sum(1) makes sure to sum all occurences of the 0
     # eq(1) then makes sure that there is only 1 such ocurrence
+    # this gives us for which ROWS(instances) there are unique values
     df = df[df.eq(0).sum(1).eq(1)]
+    # at this point, each row in df has exactly 1 value that is 0
+
+    #TODO: Sum number of 0s to count the number of uniques per column
+    unique_count = df.eq(0).sum(0).sort_values(ascending=False)
 
     # (df != 0) builds truth df with nonzero values
     # .all(axis(0)) makes a truth array for every column saying that 
     # ALL values are nonzero
-    # detel all other columns
+    # then, we save the columns where all values are nonzero(no unique)
     df_all_vall_nonzero = df.loc[:, (df != 0).all(axis=0)]
 
     # here we get all columns not present in the above df
-    # since the above df has columns with no 0 values
-    # this new set will be all solumns with 1 zero value
+    # since the above df has columns with no unique values
+    # this new set will be all solumns with at least 1 unique value
     nonzero_cols = [col for col in list(df.columns) if col not in list(df_all_vall_nonzero.columns)]
-
-
-    return nonzero_cols
+    return nonzero_cols, unique_count
 
 def read_data(data_file, nonval_replacement=100000):
     # load data
@@ -279,7 +283,7 @@ def read_data(data_file, nonval_replacement=100000):
 
     data = data.drop(data.index[[0]])
 
-    data.rename(columns=lambda n: n.replace(NAME_PREFIX, ""), inplace=True)
+    data.rename(columns=lambda n: n.replace(NAME_PREFIX, "").replace(NAME_PREFIX_2, ""), inplace=True)
     
     data.rename(index=lambda n: n.split("/")[1].replace(".gz", ""), inplace=True)
 
@@ -302,7 +306,7 @@ def write_param_files(param_file, configs, output_name):
 
         with open(output_name, "w") as out:
             for line in lines:
-                if any(config in line for config in configs):
+                if any(line.startswith(config) for config in configs):
                     out.write(line)
 
 
@@ -313,26 +317,6 @@ def do_virtual_best(data, config_names, best_n, data_optimal, VB_name, folder_na
     print("calculating virtual best based on {}".format(VB_name))
     virtual_to_csv(data, config_names, os.path.join(folder_name,"{}-top{}.csv".format(VB_name, best_n)), data_optimal)
     print("time taken: {}".format(time.time() - t))
-
-def compare_configs(parameter_file, to_compare, out_file):
-
-    print("COMPARING")
-    print(parameter_file)
-    print("###")
-    with open(parameter_file, "r") as f:
-        configs = f.readlines()
-
-    with open(out_file, "w") as f:
-
-        for base, other in to_compare:
-            line_base, line_other, params = comparing_tool.compare_configs_strings(configs[base], configs[other])
-
-            f.write("Comparing configs {} and {}".format(base, other))
-            f.write(params)
-            f.write(line_base)
-            f.write(line_other)
-            f.write("\n\n")
-
 
 if __name__ == "__main__":
 
@@ -362,8 +346,6 @@ if __name__ == "__main__":
     folder = "test-csv-folder"
     create_folder(folder)
 
-    best_n_to_save = 10
-
     comparing_to_best_folder = "comparisons"
     new_folder = os.path.join(folder, comparing_to_best_folder)
     create_folder(new_folder)
@@ -380,11 +362,14 @@ if __name__ == "__main__":
     # optimum value than the best bound
     comp_df[comp_df < 0].dropna(how="all").dropna(axis=1, how="all").to_csv(os.path.join(folder,"better_singular.csv"))
     
-    unique_cols = unique_vals_in_cols(data_optval)
+    unique_cols, unique_count = unique_vals_in_cols(data_optval)
 
     best_n = args.vb_n
 
-    best_n_unique = best_n_by_score(unique_cols, df_score, best_n)
+    best_n_unique_score = best_n_by_score(unique_cols, df_score, best_n)
+    
+    best_n_unique_count = unique_count.index[:best_n]
+    print(best_n_unique_count)
 
     best_n_all = best_n_by_score(list(data_optval.columns), df_score, best_n)
 
@@ -395,7 +380,9 @@ if __name__ == "__main__":
     best_n_optimal_count = optimal_count(data_optimal).sort_values(ascending=False).index[:best_n]
 
 
-    do_virtual_best(data_optval, best_n_unique, best_n, data_optimal,"by-unique", os.path.join(folder, "VB-uniques"))
+    do_virtual_best(data_optval, best_n_unique_score, best_n, data_optimal,"by-unique-score", os.path.join(folder, "VB-uniques-score"))
+
+    do_virtual_best(data_optval, best_n_unique_count, best_n, data_optimal,"by-unique-count", os.path.join(folder, "VB-uniques-count"))
 
     do_virtual_best(data_optval, best_n_all, best_n, data_optimal,"by-score", os.path.join(folder, "VB-best-by-scrore"))
 
@@ -408,14 +395,16 @@ if __name__ == "__main__":
     create_folder(new_folder)
 
     # write option files
-    write_param_files(args.options_file, best_n_unique, os.path.join(new_folder,"unique-options.txt"))
+    write_param_files(args.options_file, best_n_unique_score, os.path.join(new_folder,"unique-score-options.txt"))
+    write_param_files(args.options_file, best_n_unique_count, os.path.join(new_folder,"unique-count-options.txt"))
     write_param_files(args.options_file, best_n_all, os.path.join(new_folder,"bestall-options.txt"))
     write_param_files(args.options_file, best_n_mean_rank, os.path.join(new_folder,"mean_rank-options.txt"))
     write_param_files(args.options_file, best_n_optimal_count, os.path.join(new_folder,"optimal_count-options.txt"))
 
 
     to_compare = list(zip(range(best_n - 1), range(1, best_n)))
-    compare_configs(os.path.join(new_folder,"unique-options.txt"), to_compare, os.path.join(folder, "VB-uniques") + os.sep + "compared_options.csv")
-    compare_configs(os.path.join(new_folder,"bestall-options.txt"), to_compare, os.path.join(folder, "VB-best-by-scrore") + os.sep + "compared_options.csv")
-    compare_configs(os.path.join(new_folder,"mean_rank-options.txt"), to_compare, os.path.join(folder, "VB-mean_rank") + os.sep + "compared_options.csv")
-    compare_configs(os.path.join(new_folder,"optimal_count-options.txt"), to_compare, os.path.join(folder, "VB-optimal-count") + os.sep + "compared_options.csv")
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"unique-score-options.txt"), to_compare, os.path.join(folder, "VB-uniques-score") + os.sep + "compared_options.csv")
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"unique-count-options.txt"), to_compare, os.path.join(folder, "VB-uniques-count") + os.sep + "compared_options.csv")
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"bestall-options.txt"), to_compare, os.path.join(folder, "VB-best-by-scrore") + os.sep + "compared_options.csv")
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"mean_rank-options.txt"), to_compare, os.path.join(folder, "VB-mean_rank") + os.sep + "compared_options.csv")
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"optimal_count-options.txt"), to_compare, os.path.join(folder, "VB-optimal-count") + os.sep + "compared_options.csv")
