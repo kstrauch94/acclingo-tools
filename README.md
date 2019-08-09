@@ -53,6 +53,8 @@ Meank rank :: Best N configurations based on the mean rank of the configurations
 
 Optimal count :: Best N configurations based on the amount of optimal values found.
 
+Unique count :: Best N configurations based on the amount of unique best solutions found.
+
 For each virtual best there is also a file that contains the configurations belonging to each k-way configuration.
 
 *score: score is calculated by adding the amount of optimal values found that are BETTER than the ones in the best bound file and the values that are EQUAL to the values found in the best bound file.
