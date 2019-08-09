@@ -13,7 +13,8 @@ DEFAULT_CONFIGS["frumpy"] = "frumpy ; --eq=5 --heuristic=Berkmin --restarts=x,10
 DEFAULT_CONFIGS["crafty"] = "crafty ; --sat-prepro=2,10,25,240 --trans-ext=dynamic --backprop --heuristic=Vsids --save-progress=180 --restarts=x,128,1.5 --deletion=basic,75 --del-init=10.0,1000,9000 --del-grow=1.1,20.0 --del-cfl=+,10000,1000 --del-glue=2 --otfs=2 --reverse-arcs=1 --counter-restarts=3,9973 --contraction=250"
 DEFAULT_CONFIGS["jumpy"]  = "jumpy ; --sat-prepro=2,20,25,240 --trans-ext=dynamic --heuristic=Vsids --restarts=L,100 --deletion=basic,75,mixed --del-init=3.0,1000,20000 --del-grow=1.1,25,x,100,1.5 --del-cfl=x,10000,1.1 --del-glue=2 --update-lbd=glucose --strengthen=recursive --otfs=2 --save-progress=70"
 DEFAULT_CONFIGS["handy"]  = "handy ; --sat-prepro=2,10,25,240 --trans-ext=dynamic --backprop --heuristic=Vsids --restarts=D,100,0.7 --deletion=sort,50,mixed --del-max=200000 --del-init=20.0,1000,14000 --del-cfl=+,4000,600 --del-glue=2 --update-lbd=less --strengthen=recursive --otfs=2 --save-progress=20 --contraction=600 --loops=distinct --counter-restarts=7,1023 --reverse-arcs=2"
-
+DEFAULT_CONFIGS["base"] = "Base ;  "
+DEFAULT_CONFIGS["heuristic-domain"] = "Heuristic-Domain ; --heuristic=Domain --dom-mod=neg,show"
 
 
 def get_file_paths(folder):
