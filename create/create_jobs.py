@@ -87,7 +87,7 @@ def populate_dir(filenames, folder):
     with open(folder + os.sep + "instances.txt", "w") as f:
         f.write("\n".join(filenames))
    
-def create_sample(exp_type, sample, sets_per_sample, folder, foldername, test, train):
+def create_sample(exp_type, sample, sets_per_sample, folder, foldername, train, test):
     for s in range(sets_per_sample):
         set_folder = folder + "set_{}".format(s+1) + os.sep
 
