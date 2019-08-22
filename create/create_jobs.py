@@ -95,7 +95,7 @@ def create_sample(exp_type, sample, sets_per_sample, folder, foldername, train, 
         populate_dir(train, set_folder + "train")
 
         # has to be done after populating so dir exists
-        write_bash_scripts(set_folder, seed=s+1)
+        write_bash_scripts(set_folder, seed=random.randint(1,9999999))
 
         EXPERIMENTS[exp_type].append(set_folder)
 
