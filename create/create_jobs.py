@@ -288,6 +288,9 @@ if __name__ == "__main__":
 
     parser.add_argument("--run-template", help="Path to the run job file template.",
                         default=RUN_TEMPLATE)
+
+    parser.add_argument("--instance-folders", help="Path to the instance folders. Each fodler is separated by a space. Each folder will be treated as a domain", 
+                        nargs="+", default=[])
     args = parser.parse_args()
 
     if args.path_to_acc is None:
@@ -302,6 +305,11 @@ if __name__ == "__main__":
     with open(args.run_template, "r") as f:
         RUN_TEXT = f.read()
 
-    prepare_experiments(FOLDERS, do_single=args.single, do_multiple=args.multiple, do_all=args.all, do_all_inclusive=args.all_inclusive,
+    if args.instance_folders == []:
+        print("Please provide at least one instance folder.")
+        sys.exit(-1)
+
+
+    prepare_experiments(args.instance_folders, do_single=args.single, do_multiple=args.multiple, do_all=args.all, do_all_inclusive=args.all_inclusive,
                             samples=args.samples, sets_per_sample=args.sets_per_sample,
                             max_instances=args.max_instances, folder_prefix=args.folder)
