@@ -20,11 +20,13 @@ PATHTOACC={ptoa}
 INSTANCESDIR=$1
 SEED=$2
 
+# 45 mins = 2700s
+# 31200 = 45 mins * 115 + some extra time
 
 python3 ${{PATHTOACC}}/scripts/acclingo --fn_suffix="*" \
         --instance_dir $INSTANCESDIR \ 
         --binary clingo \
-        --run_obj quality --cutoff 27000 --ac_budget 312000 \
+        --run_obj quality --cutoff 2700 --ac_budget 312000 \
         --tae_class acclingo/tae/clasp_opt_tae.py \
         --tae_args "{{\"best_known\": \"/home/kstrauch/TT-opt/acclingo/bestbound/bestboundtest.csv\"}}" \
         --pcs_file ${{PATHTOACC}}/pcs/limited_params.pcs \
