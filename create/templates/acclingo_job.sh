@@ -2,7 +2,7 @@
 
 #SBATCH --output=out.%j
 #SBATCH --error=err.%j
-#SBATCH --time=88:00:00       # walltime
+#SBATCH --time=0:312600       # walltime
 #SBATCH --cpus-per-task=2    # number of processor cores (i.e. tasks)
 #SBATCH --partition=long
 
