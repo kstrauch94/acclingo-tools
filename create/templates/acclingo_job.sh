@@ -2,7 +2,7 @@
 
 #SBATCH --output=out.%j
 #SBATCH --error=err.%j
-#SBATCH --time80:00:00=       # walltime
+#SBATCH --time=88:00:00       # walltime
 #SBATCH --cpus-per-task=2    # number of processor cores (i.e. tasks)
 #SBATCH --partition=long
 
@@ -24,10 +24,10 @@ SEED=$2
 python3 ${{PATHTOACC}}/scripts/acclingo --fn_suffix="*" \
         --instance_dir $INSTANCESDIR \ 
         --binary clingo \
-        --run_obj quality --cutoff 300 --ac_budget 180000 \
+        --run_obj quality --cutoff 27000 --ac_budget 312000 \
         --tae_class acclingo/tae/clasp_opt_tae.py \
         --tae_args "{{\"best_known\": \"/home/kstrauch/TT-opt/acclingo/bestbound/bestboundtest.csv\"}}" \
-        --pcs_file path/to/pcs/file.pcs \
+        --pcs_file ${{PATHTOACC}}/pcs/limited_params.pcs \
         --runsolver ${{PATHTOACC}}/binaries/runsolver \
         --seed $SEED
 
