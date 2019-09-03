@@ -10,6 +10,7 @@
 set -e
 
 # Load environment modules for your application here.
+source /etc/profile.d/modules.sh
 module purge
 module load anaconda3
 source deactivate
@@ -20,16 +21,5 @@ PATHTOACC={ptoa}
 INSTANCESDIR=$1
 SEED=$2
 
-# 45 mins = 2700s
-# 31200 = 45 mins * 115 + some extra time
-
-python3 ${{PATHTOACC}}/scripts/acclingo --fn_suffix="*" \
-        --instance_dir $INSTANCESDIR \ 
-        --binary clingo \
-        --run_obj quality --cutoff 2700 --ac_budget 312000 \
-        --tae_class acclingo/tae/clasp_opt_tae.py \
-        --tae_args "{{\"best_known\": \"/home/kstrauch/TT-opt/acclingo/bestbound/bestboundtest.csv\"}}" \
-        --pcs_file ${{PATHTOACC}}/pcs/limited_params.pcs \
-        --runsolver ${{PATHTOACC}}/binaries/runsolver \
-        --seed $SEED
+python ${{PATHTOACC}}/scripts/acclingo --fn_suffix="*" --instance_dir $INSTANCESDIR --binary clingo --run_obj quality --cutoff 10 --ac_budget 60 --tae_class ${{PATHTOACC}}/acclingo/tae/clasp_opt_tae.py --tae_args "{{\"best_known\": \"/home/kstrauch/TT-opt/acclingo/bestbound/bestboundtest.csv\"}}" --pcs_file ${{PATHTOACC}}/pcs/limited_params.pcs --runsolver ${{PATHTOACC}}/binaries/runsolver --seed $SEED
 
