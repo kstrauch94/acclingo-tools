@@ -46,11 +46,12 @@ class Experiment():
     def __init__(self, folder, program=None, exps=3, sets=3):
         
         # tag is also the name
-        # the -3 from the split is to include the Experiments folder + type(all, single, multiple)
+        # the -4 from the split is to include the Experiments folder + type(all, single, multiple)
         # + domain(all, bio-expansion, ...)
         namesplit = folder.split("/")[-4:]
-        folderpath = "/".join(namesplit)
-        self.name = "---".join(namesplit)
+        folderpath = "/".join(namesplit) 
+        # path contains the folder name while name only has domain, benchmark type, set, sample
+        self.name = "---".join(namesplit[1:])
         self.program = program
 
         self.experiments = {}
@@ -87,7 +88,7 @@ class Experiment():
         options = parse_options(line)
         
         if self.program is not None:
-            self.test_options(options, program)
+            self.test_options(options, self.program)
 
         return options
 
@@ -96,7 +97,8 @@ class Experiment():
         #print(options)
         #TODO: dont harcode asprin as the program to use! make it a variable
         try:
-            output = subprocess.check_output("echo a.  | {} {}".format(options, program), shell=True)
+            print("testing option")
+            output = subprocess.check_output("echo a.  | {} {}".format(program, options), shell=True)
         except subprocess.CalledProcessError as e:
             output=e.output
 
@@ -177,7 +179,7 @@ def create_xml_bench_all(folder, xml_name, program, timeout, walltime):
 
     for directory in all_dirs_with_subdirs(folder, ["set_1"]):
         print(directory)
-        exp = Experiment(directory)
+        exp = Experiment(directory, program)
         settings.append("\n".join(exp.get_settings(with_base=False)))
     
     print("Amount of settings: ", len(settings))
