@@ -58,7 +58,7 @@ def compare_to_best(best, data):
 
     return df, df_percent
 
-def get_best(data_optval, data_optimal, data_time, best, folder):
+def get_best(data_optval, data_optimal, data_time, data_sol_found, best, folder):
 
     comp_df, perc_df = compare_to_best(best, data_optval)
 
@@ -82,6 +82,8 @@ def get_best(data_optval, data_optimal, data_time, best, folder):
 
     df_summary["time"] = sum_columns(data_time)
 
+    df_summary["solutions_found"] = sum_columns(data_sol_found)
+
     df_summary["unique_count"] = unique_count
 
     df_summary["perc_mean"] = mean
@@ -92,7 +94,7 @@ def get_best(data_optval, data_optimal, data_time, best, folder):
     new_folder = os.path.join(folder, new_folder_name)
     create_folder(new_folder)
 
-    to_csv_sorted(df_summary, [["score", "better", "same"], ["same", "better"], ["better", "same"], ["optimal_count", "score"], ["unique_count", "score"], ["perc_mean"], ["perc_geometric_mean"]], new_folder)
+    to_csv_sorted(df_summary, [["score", "better", "same"], ["same", "better"], ["better", "same"], ["optimal_count", "score"], ["unique_count", "score"], ["time", "score"], ["solutions_found", "score"],["perc_mean"], ["perc_geometric_mean"]], new_folder)
 
     to_csv_normal(comp_df, best, os.path.join(new_folder, "compared-to-best.csv"))
     to_csv_normal(perc_df, best, os.path.join(new_folder, "percent-to-best.csv"), mean=True)
@@ -192,7 +194,7 @@ def virtual_to_csv(data, cols, name, data_per_criteria):
     same_series = sum_columns(data_per_criteria["same"], do="max", columns=ranks.index)
     better_series = sum_columns(data_per_criteria["better"], do="max", columns=ranks.index)
     unique_series = sum_columns(data_per_criteria["unique"], do="max", columns=ranks.index)
-
+    sol_found_series = sum_columns(data_per_criteria["solutions_found"], do="max", columns=ranks.index)
 
     df = pd.DataFrame()
     df["mean rank"] = ranks
@@ -201,6 +203,7 @@ def virtual_to_csv(data, cols, name, data_per_criteria):
     df["same"] = same_series
     df["better"] = better_series
     df["unique_count"] = unique_series
+    df["solutions_found"] = sol_found_series
 
     k_ways = [k for k in ranks.index if NAME_SPLIT in k]
     singles = [k for k in ranks.index if NAME_SPLIT not in k]
@@ -393,6 +396,8 @@ if __name__ == "__main__":
     data_optval = read_data(args.optval, nonval_replacement=lambda row: 2 * row.max())
     data_optimal = read_data(args.optimal, nonval_replacement=lambda row: 0)
     data_time = read_data(args.timeval, nonval_replacement=lambda row: 10800)
+    data_sol_found = read_data(args.optval, nonval_replacement=lambda row: -9999)
+    data_sol_found = (data_sol_found != -9999).astype(float)
 
     # load best bound data
     best = pd.read_csv(args.best, header=None, index_col=0)
@@ -406,8 +411,10 @@ if __name__ == "__main__":
     data_per_criteria = {}
     data_per_criteria["optimal"] = data_optimal
     data_per_criteria["time"] = data_time
+    data_per_criteria["solutions_found"] = data_sol_found
 
-    comp_df, perc_df, data_summary, by_criteria = get_best(data_optval, data_optimal, data_time, best, folder)
+    comp_df, perc_df, data_summary, by_criteria = get_best(data_optval, data_optimal, data_time, data_sol_found,
+                                                           best, folder)
 
     data_per_criteria.update(by_criteria)
 
@@ -429,6 +436,9 @@ if __name__ == "__main__":
 
     best_n_time = data_summary["time"].sort_values(ascending=True).index[:best_n]
 
+    best_n_sol_found = data_summary["solutions_found"].sort_values(ascending=False).index[:best_n]
+
+
     do_virtual_best(data_optval, best_n_unique_count,  
                     best_n, data_per_criteria,"by-unique-count",
                     os.path.join(folder, "VB-uniques-count"))
@@ -448,6 +458,10 @@ if __name__ == "__main__":
     do_virtual_best(data_optval, best_n_time,          
                     best_n, data_per_criteria,"by-time",   
                     os.path.join(folder, "VB-time"))
+
+    do_virtual_best(data_optval, best_n_sol_found,          
+                    best_n, data_per_criteria,"by-solutions-found",   
+                    os.path.join(folder, "VB-solutions-found"))
 
 
     parameter_folder = "parameter-files"
@@ -469,7 +483,8 @@ if __name__ == "__main__":
     write_param_files(args.options_file, best_n_time,
                         os.path.join(new_folder,"time-options.txt"))
 
-
+    write_param_files(args.options_file, best_n_sol_found,
+                        os.path.join(new_folder,"solutions-found-options.txt"))
 
     to_compare = list(zip(range(best_n - 1), range(1, best_n)))
 
@@ -487,3 +502,6 @@ if __name__ == "__main__":
 
     comparing_tool.compare_configs_by_number(os.path.join(new_folder,"time-options.txt"),
                                             to_compare, os.path.join(folder, "VB-time") + os.sep + "compared_options.csv")
+
+    comparing_tool.compare_configs_by_number(os.path.join(new_folder,"solutions-found-options.txt"),
+                                            to_compare, os.path.join(folder, "VB-solutions-found") + os.sep + "compared_options.csv")
