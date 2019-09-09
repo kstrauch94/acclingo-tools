@@ -52,7 +52,10 @@ Meank rank :: Best N configurations based on the mean rank of the configurations
 Optimal count :: Best N configurations based on the amount of optimal values found.
 
 Unique count :: Best N configurations based on the amount of unique solutions found.
+
 Time :: Best N configurations based on time.
+
+Solutions found :: Best N configurations based on amount of solutions found.
 
 For each virtual best there is also a file that contains the configurations belonging to each k-way configuration.
 
