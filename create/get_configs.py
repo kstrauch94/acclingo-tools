@@ -1,4 +1,4 @@
-from parseOptions import parse_options
+from parseOptions import parse_options, parse_options_thread
 import os
 import subprocess
 import argparse
@@ -43,8 +43,9 @@ JOB ="""
 """
 class Experiment():
     
-    def __init__(self, folder, program=None, exps=3, sets=3):
-        
+    def __init__(self, folder, program=None, exps=3, sets=3, parsing_func=parse_options):
+       
+        self.parsing_func = parsing_func
         # tag is also the name
         # the -4 from the split is to include the Experiments folder + type(all, single, multiple)
         # + domain(all, bio-expansion, ...)
@@ -85,7 +86,7 @@ class Experiment():
             for line in f:
                 pass
         
-        options = parse_options(line)
+        options = self.parsing_func(line)
         
         if self.program is not None:
             self.test_options(options, self.program)
@@ -101,6 +102,7 @@ class Experiment():
             output = subprocess.check_output("echo a.  | {} {}".format(program, options), shell=True)
         except subprocess.CalledProcessError as e:
             output=e.output
+            print("{} {}".format(program, options))
 
         if b"\nSATISFIABLE" not in output and b"MODEL FOUND" not in output:
             raise ValueError("Option: {} \n DOES NOT WORK\noutput: {}".format(options, output))
@@ -172,14 +174,14 @@ def create_xml_bench():
 
         f.write(FOOT)
 
-def create_xml_bench_all(folder, xml_name, program, timeout, walltime):
+def create_xml_bench_all(folder, xml_name, program, timeout, walltime, sets, parsing_func):
     settings = []
     benchmarks = []
     projects = []
 
     for directory in all_dirs_with_subdirs(folder, ["set_1"]):
         print(directory)
-        exp = Experiment(directory, program)
+        exp = Experiment(directory, program, parsing_func=parsing_func, sets=sets)
         settings.append("\n".join(exp.get_settings(with_base=False)))
     
     print("Amount of settings: ", len(settings))
@@ -216,10 +218,17 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--program", help="Program with which the parsed configs will be tested", default=None)
     parser.add_argument("--walltime", help="Walltime for the benchmark. Input format: HH:MM:SS", default="48:00:00")
     parser.add_argument("--timeout", help="Timeout for each instance in seconds", type=int, default=300)
+    parser.add_argument("--sets", help="the amount of sets per experiment", type=int, default=3)
+    parser.add_argument("--parse-thread", help="Parse arguments including its assigned thread", action="store_true")
 
     args = parser.parse_args()
 
-    create_xml_bench_all(args.folder, args.xml, args.program, args.timeout, args.walltime)
+    if args.parse_thread:
+        parsing_func = lambda x: parse_options(x, " // ")
+    else:
+        parsing_func = parse_options
+
+    create_xml_bench_all(args.folder, args.xml, args.program, args.timeout, args.walltime, args.sets, parsing_func)
 
 
         
