@@ -25,13 +25,13 @@ def get_file_paths(folder):
 
     return paths
 
-def get_options(file_path, program=None):
+def get_options(file_path, thread_separator=" ", program=None):
     
     with open(file_path, "r") as f:
         for line in f:
             pass
     
-    options = parse_options(line)
+    options = parse_options(line, thread_separator=thread_separator)
     
     if program is not None:
         test_options(options, program)
@@ -52,14 +52,14 @@ def test_options(options, program):
 
     return 1 # all good :)
 
-def write_options_file(folder, add_defaults=False, outname="options.txt"):
+def write_options_file(folder, add_defaults=False, thread_separator=" ", outname="options.txt"):
 
     if outname is None:
         outname = "options.txt"
 
     with open(outname, "w") as f:
         for path in get_file_paths(folder):
-            options = get_options(path)
+            options = get_options(path, thread_separator)
             path_split = path.split("/")
             name = "---".join(path_split[-6:-3])+"_"+path_split[-3]
 
@@ -75,7 +75,13 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--folder", help="Folder where the acclingo results are located")
     parser.add_argument("-o", "--out", help="Output file name")
     parser.add_argument("-d", "--add-defaults", action="store_true", help="Add the default options(jumpy, trendy, etc.) to the file.")
+    parser.add_argument("-p", "--parallel-options", action="store_true", help="Add a separator between options for different threads.")
 
     args = parser.parse_args()
 
-    write_options_file(args.folder, add_defaults=args.add_defaults, outname=args.out)
+    if args.parallel_options:
+        thread_separator = " // "
+    else:
+        thread_separator = " "
+
+    write_options_file(args.folder, add_defaults=args.add_defaults, thread_separator=thread_separator, outname=args.out)
