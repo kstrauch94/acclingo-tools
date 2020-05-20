@@ -2,9 +2,14 @@ from parseOptions import parse_options
 import os
 import subprocess
 import argparse
+import json
+import pickle
 
 
 FIND = ["find", "folder_placeholder", "-name", "traj_aclib2.json"]
+FIND_HYDRA = ["find", "folder_placeholder", "-name", "portfolio.pkl"]
+
+INCUMBENT = "incumbent"
 
 DEFAULT_CONFIGS = {}
 DEFAULT_CONFIGS["tweety"] = "tweety ; --eq=3 --trans-ext=dynamic --heuristic=Vsids,92 --restarts=L,60 --deletion=basic,50 --del-max=2000000 --del-estimate=1 --del-cfl=+,2000,100,20 --del-grow=0 --del-glue=2,0 --strengthen=recursive,all --otfs=2 --init-moms --score-other=all --update-lbd=less --save-progress=160 --init-watches=least --local-restarts --loops=shared"
@@ -17,26 +22,79 @@ DEFAULT_CONFIGS["base"] = "Base ;  "
 DEFAULT_CONFIGS["heuristic-domain"] = "Heuristic-Domain ; --heuristic=Domain --dom-mod=neg,show"
 
 
-def get_file_paths(folder):
-    new_find = list(FIND)
+def get_file_paths(folder, find_command):
+    new_find = list(find_command)
     new_find[1] = folder
     
     paths = subprocess.check_output(new_find).decode("utf-8").split()
 
     return paths
 
-def get_options(file_path, thread_separator=" ", program=None):
-    
+def read_traj_aclib(file_path):
     with open(file_path, "r") as f:
-        for line in f:
-            pass
+        for line in f: pass
+
+    options_list = json.loads(line)[INCUMBENT]
+    options_list = [opt.replace("\'", "") for opt in options_list]
+
+    return options_list
+
+def read_hydra_pkl(file_path):
+    with open(file_path, "rb") as f:
+        configs = pickle.load(f)
+
+    options_lists = []
+    for c in configs:
+        options_lists.append(list_from_configspace(c))
+
+    return options_lists
+
+def list_from_configspace(config):
+
+    config_list = []
+    for c in config:
+        c_val = config.get(c)
+        config_str = c + "=" + str(c_val)
+        config_list.append(config_str)
+
+    return config_list
+
+def get_options_traj(file_path, thread_separator=" ", program=None):
     
-    options = parse_options(line, thread_separator=thread_separator)
+    options_list = read_traj_aclib(file_path)
+    options = parse_options(options_list, thread_separator=thread_separator)
     
     if program is not None:
         test_options(options, program)
 
     return options
+
+def get_options_hydra(file_path, thread_separator=" ", program=None):
+
+    options_lists = read_hydra_pkl(file_path)
+
+    # read all options lists
+    # grab first one as ir
+    # append all but the "general" options from the other ones
+    # get first one using // separator
+    # get rest by using that separator and doing split
+    # append rest to first
+
+    print(options_lists[0])
+
+    main_config = parse_options(options_lists[0], thread_separator=" // ")
+
+    for config in options_lists[1:]:
+        options = parse_options(config, thread_separator=" // ")
+        options = options.split("//")
+
+        main_config = main_config + " // ".join(options[1:])
+
+    if program is not None:
+        test_options(main_config, program)
+
+    return main_config
+        
 
 def test_options(options, program):
 
@@ -52,14 +110,21 @@ def test_options(options, program):
 
     return 1 # all good :)
 
-def write_options_file(folder, add_defaults=False, thread_separator=" ", outname="options.txt"):
+def write_options_file(folder, add_defaults=False, thread_separator=" ", outname="options.txt", hydra=True):
+    
+    if hydra:
+        find_command = FIND_HYDRA
+        get_options_func = get_options_hydra
+    else:
+        find_command = FIND
+        get_options_func = get_options_traj
 
     if outname is None:
         outname = "options.txt"
 
     with open(outname, "w") as f:
-        for path in get_file_paths(folder):
-            options = get_options(path, thread_separator)
+        for path in get_file_paths(folder, find_command):
+            options = get_options_func(path, thread_separator)
             path_split = path.split("/")
             name = "---".join(path_split[-6:-3])+"_"+path_split[-3]
 
@@ -76,6 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--out", help="Output file name")
     parser.add_argument("-d", "--add-defaults", action="store_true", help="Add the default options(jumpy, trendy, etc.) to the file.")
     parser.add_argument("-p", "--parallel-options", action="store_true", help="Add a separator between options for different threads.")
+    parser.add_argument("--hydra", action="store_true", help="The acclingo run used hydra")
 
     args = parser.parse_args()
 
@@ -84,4 +150,4 @@ if __name__ == "__main__":
     else:
         thread_separator = " "
 
-    write_options_file(args.folder, add_defaults=args.add_defaults, thread_separator=thread_separator, outname=args.out)
+    write_options_file(args.folder, add_defaults=args.add_defaults, thread_separator=thread_separator, outname=args.out, hydra=args.hydra)
