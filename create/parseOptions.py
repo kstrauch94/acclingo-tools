@@ -1,5 +1,6 @@
 from argparse import ArgumentParser 
 import json
+import pickle
 
 INCUMBENT = "incumbent"
 
@@ -10,10 +11,11 @@ SPECIAL = -1
 
 
 
-def parse_options(options, thread_separator=" "):
+def parse_options(options, thread_separator=" ", hydra=False):
     arguments = {}
-    options = json.loads(options)[INCUMBENT]
-    options = [opt.replace("\'", "") for opt in options]
+    
+    #options = json.loads(options)[INCUMBENT]
+    #options = [opt.replace("\'", "") for opt in options]
     
     for opt in options:
         options, val = opt.split("=")
