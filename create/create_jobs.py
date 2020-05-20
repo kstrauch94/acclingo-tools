@@ -15,7 +15,7 @@ ACC_TEMPLATE = os.path.join(FILE_PATH, "templates/acclingo_job.sh")
 # if the name of the file with the instances changes at some point make sure to change it here and in the populate dir function
 RUN_TEMPLATE = os.path.join(FILE_PATH, "templates/run_job.sh")
 
-EXPERIMENTS = {"all": [], "single": [], "multiple": []}
+EXPERIMENTS = {"all": [], "single": [], "multiple": [], "all-files": []}
 
 def make_dir(path):
     if not os.path.exists(path):
@@ -196,8 +196,17 @@ def choose_all(classes_folders, samples=3, sets_per_sample=3, max_instances=19, 
         folder = folder_prefix + os.sep + "all" + os.sep + foldername + os.sep + "sample_" + str(sample+1) + os.sep
         create_sample("all", sample, sets_per_sample, folder, foldername, train, test)
 
+def choose_all_instances(classes_folders, sets_per_sample=3, folder_prefix="Experiments"):
 
-def prepare_experiments(folders, do_single=False, do_multiple=False, do_all=False, 
+    files = []
+
+    for f in classes_folders:
+        files += all_files_in_folder(f)
+
+    folder = folder_prefix + os.sep + "all-files" + os.sep + "all-files" + os.sep + "sample_1" + os.sep
+    create_sample("all-files", 1, sets_per_sample, folder, "all-files", files, [])
+
+def prepare_experiments(folders, do_single=False, do_multiple=False, do_all=False, use_all_instances=False, 
                         do_all_inclusive=0, samples=3, sets_per_sample=3,
                         max_instances=19, 
                         folder_prefix="experiments"):
@@ -235,14 +244,17 @@ def prepare_experiments(folders, do_single=False, do_multiple=False, do_all=Fals
                    samples=samples, sets_per_sample=sets_per_sample, 
                    max_instances=max_instances)
 
+    if use_all_instances:
+        choose_all_instances(folders, sets_per_sample, folder_prefix=folder_prefix)
+
     for exp_type, exp_folders in EXPERIMENTS.items():
         if exp_folders == []:
             continue
 
-        run_acc_lines = [f + "run_acc.pbs\n" for f in exp_folders]
+        run_acc_lines = [os.path.abspath(f + "run_acc.pbs\n") for f in exp_folders]
 
         # f_name is the name of the bash script to execute all acc of that type
-        f_name = "run_{}.pbs".format(exp_type)
+        f_name = os.path.join(folder_prefix, "run_{}.pbs".format(exp_type))
         with open(f_name, "w") as b:
             b.write("#!/bin/bash\n\n")
             b.writelines(run_acc_lines)
@@ -254,6 +266,9 @@ if __name__ == "__main__":
     # TODO -: implement a way to pass the folders. Right now they are a list in python.
     #      -: For now the names of the instances have to be UNIQUE! If not then
     #         there will be conflics when creating the test and train folders.
+    #      -: rework the thing so it takes list of files instead of folders.
+    #         - we can still handle folders by reading the instances in them and create a file path file
+    #      -: add more documentation to the functions
 
     parser = argparse.ArgumentParser()
 
@@ -271,6 +286,8 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--all-inclusive", help="Aggregate all domains and create samples while guaranteeing that each sample has at least N instance from each domain",
                         type=int, default=0)
 
+    parser.add_argument("--use-all-instances", help="Aggregate all domains and use all instances in the training while having none in the testing set. The --samples option is ignored.", action="store_true")
+
     parser.add_argument("--sets-per-sample", help="Amount of sets to create per sample(amount of configurations to learn from each sample)",
                         type=int, default=3)
 
@@ -280,7 +297,7 @@ if __name__ == "__main__":
     parser.add_argument("--folder", help="Name of the folder where the experiments will be created",
                         default="Experiments")
 
-    parser.add_argument("--samples", help="Aggregate all domains and create samples",
+    parser.add_argument("--samples", help="amount of samples to create",
                         type=int, default=3)
 
     parser.add_argument("--acc-template", help="Path to the acclingo job file template.",
@@ -291,6 +308,9 @@ if __name__ == "__main__":
 
     parser.add_argument("--instance-folders", help="Path to the instance folders. Each fodler is separated by a space. Each folder will be treated as a domain", 
                         nargs="+", default=[])
+
+    parser.add_argument("--instance-file", help="Path to a file containing a list of paths to the instance files. Each instance should ocuppy one line. A # marks the start of another domain",
+                        default=None)
     args = parser.parse_args()
 
     if args.path_to_acc is None:
@@ -305,11 +325,11 @@ if __name__ == "__main__":
     with open(args.run_template, "r") as f:
         RUN_TEXT = f.read()
 
-    if args.instance_folders == []:
+    if args.instance_folders == [] and args.instance_file is None:
         print("Please provide at least one instance folder.")
         sys.exit(-1)
 
 
-    prepare_experiments(args.instance_folders, do_single=args.single, do_multiple=args.multiple, do_all=args.all, do_all_inclusive=args.all_inclusive,
+    prepare_experiments(args.instance_folders, do_single=args.single, do_multiple=args.multiple, do_all=args.all, do_all_inclusive=args.all_inclusive, use_all_instances=args.use_all_instances,
                             samples=args.samples, sets_per_sample=args.sets_per_sample,
                             max_instances=args.max_instances, folder_prefix=args.folder)
