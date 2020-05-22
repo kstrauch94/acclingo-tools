@@ -1,9 +1,7 @@
-from parseOptions import parse_options
+import parseOptions
 import os
 import subprocess
 import argparse
-import json
-import pickle
 
 
 FIND = ["find", "folder_placeholder", "-name", "traj_aclib2.json"]
@@ -30,71 +28,6 @@ def get_file_paths(folder, find_command):
 
     return paths
 
-def read_traj_aclib(file_path):
-    with open(file_path, "r") as f:
-        for line in f: pass
-
-    options_list = json.loads(line)[INCUMBENT]
-    options_list = [opt.replace("\'", "") for opt in options_list]
-
-    return options_list
-
-def read_hydra_pkl(file_path):
-    with open(file_path, "rb") as f:
-        configs = pickle.load(f)
-
-    options_lists = []
-    for c in configs:
-        options_lists.append(list_from_configspace(c))
-
-    return options_lists
-
-def list_from_configspace(config):
-
-    config_list = []
-    for c in config:
-        c_val = config.get(c)
-        config_str = c + "=" + str(c_val)
-        config_list.append(config_str)
-
-    return config_list
-
-def get_options_traj(file_path, thread_separator=" ", program=None):
-    
-    options_list = read_traj_aclib(file_path)
-    options = parse_options(options_list, thread_separator=thread_separator)
-    
-    if program is not None:
-        test_options(options, program)
-
-    return options
-
-def get_options_hydra(file_path, thread_separator=" ", program=None):
-
-    options_lists = read_hydra_pkl(file_path)
-
-    # read all options lists
-    # grab first one as ir
-    # append all but the "general" options from the other ones
-    # get first one using // separator
-    # get rest by using that separator and doing split
-    # append rest to first
-
-    print(options_lists[0])
-
-    main_config = parse_options(options_lists[0], thread_separator=" // ")
-
-    for config in options_lists[1:]:
-        options = parse_options(config, thread_separator=" // ")
-        options = options.split("//")
-
-        main_config = main_config + " // ".join(options[1:])
-
-    if program is not None:
-        test_options(main_config, program)
-
-    return main_config
-        
 
 def test_options(options, program):
 
@@ -114,10 +47,10 @@ def write_options_file(folder, add_defaults=False, thread_separator=" ", outname
     
     if hydra:
         find_command = FIND_HYDRA
-        get_options_func = get_options_hydra
+        get_options_func = parseOptions.get_options_hydra
     else:
         find_command = FIND
-        get_options_func = get_options_traj
+        get_options_func = parseOptions.get_options_traj
 
     if outname is None:
         outname = "options.txt"
