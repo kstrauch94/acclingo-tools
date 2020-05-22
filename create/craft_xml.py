@@ -41,7 +41,7 @@ JOB ="""
 """
     
 
-def craft_xml(xml_name, walltime, timeout, settings):
+def craft_xml(xml_name, walltime, timeout, benchmarks_folder, settings):
 
     with open(xml_name, "w") as f:
         f.write(HEADER)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument("-x", "--xml", help="Name of the resulting xml file", default=None)
     parser.add_argument("--walltime", help="Walltime for the benchmark. Input format: HH:MM:SS", default="48:00:00")
     parser.add_argument("--timeout", help="Timeout for each instance in seconds", type=int, default=300)
-
+    parser.add_argument("--benchmarks", help="Folder with the benchmark instances")
     args = parser.parse_args()
 
-    craft_xml(args.xml, args.walltime, args.timeout, read_config_file(args.config_file))
+    craft_xml(args.xml, args.walltime, args.timeout, args.benchmarks, read_config_file(args.config_file))
