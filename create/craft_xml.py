@@ -41,7 +41,7 @@ JOB ="""
 """
     
 
-def craft_xml(xml_name, walltime, timeout, settings)
+def craft_xml(xml_name, walltime, timeout, settings):
 
     with open(xml_name, "w") as f:
         f.write(HEADER)
