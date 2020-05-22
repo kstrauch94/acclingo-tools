@@ -50,7 +50,7 @@ def craft_xml(xml_name, walltime, timeout, benchmarks_folder, settings):
     
         f.write(SYSTEM_END)
 
-        f.write(BENCHMARK.format(name="ALL", folders=benchmarks_folder))
+        f.write(BENCHMARK.format(name="ALL", path=benchmarks_folder))
         
         f.write(PROJECT.format(name="ALL", benchmark="ALL", tag="*all*"))
 
