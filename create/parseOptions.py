@@ -53,13 +53,11 @@ def get_options_hydra(file_path, thread_separator=" // ", program=None):
     options_lists = read_hydra_pkl(file_path)
 
     # read all options lists
-    # grab first one as ir
+    # grab first one as main
     # append all but the "general" options from the other ones
     # get first one using // separator
     # get rest by using that separator and doing split
     # append rest to first
-
-    print(options_lists[0])
 
     main_config = parse_options(options_lists[0], thread_separator=" // ")
 
