@@ -2,4 +2,4 @@
 
 cd "$(dirname $0)"
 
-sbatch acc.pbs train/instances.txt {seed}
+sbatch acc.pbs {instance_file} {seed}
