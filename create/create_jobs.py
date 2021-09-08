@@ -15,6 +15,15 @@ RUN_TEMPLATE = os.path.join(FILE_PATH, "templates/run_job.sh")
 
 RUN_ACC_NAME = "run_acc.pbs"
 
+def get_base_name(path):
+    # this gets the name of the parent folder
+
+    # if there is a trailing backslash then delete it
+    if path.endswith("/"):
+        path = path[:-1]
+
+    return os.path.basename(path)
+
 def make_dir(path):
 	if not os.path.exists(path):
 		try:
@@ -46,7 +55,7 @@ def prepare_experiments(files, sets_per_sample=3, folder_prefix="experiments"):
 		run_acc_lines = []
 
 		for _file in files:
-			file_name = os.path.basename(_file)
+			file_name = get_base_name(_file)
 			folder = folder_prefix + os.sep + file_name
 			for s in range(1, sets_per_sample+1):
 				sample_folder = folder + os.sep + f"sample-{s}"
