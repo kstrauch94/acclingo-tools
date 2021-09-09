@@ -34,14 +34,14 @@ def test_options(options, program):
     #print(options)
     #TODO: dont harcode asprin as the program to use! make it a variable
     try:
-        output = subprocess.check_output("echo a.  | {} {}".format(options, program), shell=True)
+        output = subprocess.check_output("echo a. | {} {}".format(options, program), shell=True)
     except subprocess.CalledProcessError as e:
         output=e.output
 
     if b"\nSATISFIABLE" not in output and b"MODEL FOUND" not in output:
         raise ValueError("Option: {} \n DOES NOT WORK\noutput: {}".format(options, output))
 
-    return 1 # all good :)
+    return 1 
 
 def write_options_file(folder, add_defaults=False, thread_separator=" ", outname="options.txt", hydra=True):
     
